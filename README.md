@@ -10,7 +10,9 @@ Key elements:
 4. Configure replication slot - `outbox-processor.ts`
 5. Subscribe to and process messages - `outbox-processor.ts`
 
-This sample application writes to `outbox-processed.log` and `outbox-errors.log`. You can test the functionality by running the app which will all you to add business data (to the people table) and see the corresponding updates to the outbox table and processed messages.
+This sample application writes to `outbox-processed.log` and `outbox-errors.log`. You can test the functionality by running the app which will allow you to add business data (to the people table) and see the corresponding updates to the outbox table and processed messages.
+
+![Screenshot](example-screenshot.png)
 
 ## Prerequisites
 
@@ -91,17 +93,11 @@ Visit `http://localhost:3000`
 If you prefer manual setup or the script fails:
 
 1. **Install dependencies:** `npm install`
-2. **Configure PostgreSQL for logical replication** (add to `postgresql.conf`):
-   ```
-   wal_level = logical
-   max_replication_slots = 4
-   max_wal_senders = 4
-   ```
-3. **Restart PostgreSQL**
-4. **Create database:** `createdb outbox_demo`
-5. **Set up schema:** `npm run setup-db`
-6. **Build:** `npm run build`
-7. **Start:** `npm start`
+2. **Restart PostgreSQL**
+3. **Create database:** `createdb outbox_demo`
+4. **Set up schema:** `npm run setup-db`
+5. **Build:** `npm run build`
+6. **Start:** `npm start`
 
 ## Configuration
 
