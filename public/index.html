@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outbox Pattern Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        input, button { padding: 5px; margin: 5px; }
+        .status-pending { color: orange; }
+        .status-processed { color: green; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; white-space: pre-wrap; }
+    </style>
+    <script>
+        async function addPerson() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            
+            if (!firstName || !lastName) {
+                alert('Please enter both first and last name');
+                return;
+            }
+            
+            const response = await fetch('/api/people', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName })
+            });
+            
+            if (response.ok) {
+                document.getElementById('firstName').value = '';
+                document.getElementById('lastName').value = '';
+                loadData();
+            } else {
+                alert('Error adding person');
+            }
+        }
+        
+        async function loadData() {
+            try {
+                const [peopleResponse, outboxResponse, processedResponse] = await Promise.all([
+                    fetch('/api/people'),
+                    fetch('/api/outbox'),
+                    fetch('/api/processed')
+                ]);
+                
+                const people = await peopleResponse.json();
+                const outbox = await outboxResponse.json();
+                const processed = await processedResponse.json();
+                
+                document.getElementById('peopleTable').innerHTML = 
+                    '<tr><th>ID</th><th>First Name</th><th>Last Name</th><th>Created At</th></tr>' +
+                    people.map(p => 
+                        `<tr><td>${p.id}</td><td>${p.first_name}</td><td>${p.last_name}</td><td>${new Date(p.created_at).toLocaleString()}</td></tr>`
+                    ).join('');
+                
+                document.getElementById('outboxTable').innerHTML = 
+                    '<tr><th>ID</th><th>Status</th><th>Message</th><th>Created At</th><th>Processed At</th></tr>' +
+                    outbox.map(m => 
+                        `<tr><td>${m.id}</td><td class="status-${m.status}">${m.status}</td><td><pre>${JSON.stringify(m.message, null, 2)}</pre></td><td>${new Date(m.created_at).toLocaleString()}</td><td>${m.processed_at ? new Date(m.processed_at).toLocaleString() : 'N/A'}</td></tr>`
+                    ).join('');
+                
+                document.getElementById('processedTable').innerHTML = 
+                    '<tr><th>Message ID</th><th>Event Type</th><th>Table</th><th>Data</th><th>Processed At</th></tr>' +
+                    processed.map(p => 
+                        `<tr><td>${p.messageId}</td><td>${p.eventType}</td><td>${p.tableName}</td><td><pre>${JSON.stringify(p.data, null, 2)}</pre></td><td>${new Date(p.timestamp).toLocaleString()}</td></tr>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        setInterval(loadData, 2000);
+        window.onload = loadData;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Outbox Pattern Demo</h1>
+        
+        <div class="section">
+            <h2>Add Person</h2>
+            <input type="text" id="firstName" placeholder="First Name">
+            <input type="text" id="lastName" placeholder="Last Name">
+            <button onclick="addPerson()">Add Person</button>
+        </div>
+        
+        <div class="section">
+            <h2>People Table</h2>
+            <table id="peopleTable"></table>
+        </div>
+        
+        <div class="section">
+            <h2>Outbox Table</h2>
+            <table id="outboxTable"></table>
+        </div>
+        
+        <div class="section">
+            <h2>Processed Messages Log</h2>
+            <table id="processedTable"></table>
+        </div>
+    </div>
+</body>
+</html>
